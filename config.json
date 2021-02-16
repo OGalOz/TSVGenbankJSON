@@ -1,0 +1,8 @@
+{
+    "type_num_to_str": {
+        "1": "CDS",
+        "2": "rRNA",
+        "5": "tRNA",
+        "6": "RNA"
+    }
+}

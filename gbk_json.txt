@@ -1,0 +1,7 @@
+
+
+To have a genbank json, you need a list of records, each with a locus,
+    features, etc... 
+    Can be a copy of the GenBank Record object just in json form instead of
+    python class
+

@@ -1,0 +1,21 @@
+
+
+TD:
+    Add Organism/ Taxon Info
+
+
+Given a TSV file with gene info with columns with the following names:
+    "locusId",
+    "sysName",
+    "type",
+    "scaffoldId",
+    "begin",
+    "end",
+    "strand", 
+    "name",
+    "desc",
+    "GC",
+    "nTA"
+
+
+Accession Names cannot have commas in them
