@@ -40,8 +40,8 @@ def get_genbank_loc_string(feature_loc):
           sequence location.
     Args: 
         feature_loc (Feature in BioPython's FeatureLocation object)
-        start (int) (zero based, should add one)
-        end (int) (zero based, should add one)
+        start (int) (zero based, should add one)?
+        end (int) (zero based, should add one)?
         strand: int (1, -1, 0)
     """
     
@@ -50,9 +50,9 @@ def get_genbank_loc_string(feature_loc):
 
     loc_str = ""
     if feature_loc.start != feature_loc.end:
-        loc_str = f"{feature_loc.start + 1}..{feature_loc.end + 1}"
+        loc_str = f"{feature_loc.start}..{feature_loc.end}"
     else:
-        loc_str = str(feature_loc.start + 1)
+        loc_str = str(feature_loc.start)
     if feature_loc.strand == -1:
         loc_str = "complement(" + loc_str + ")"
 

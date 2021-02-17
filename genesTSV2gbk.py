@@ -109,7 +109,7 @@ def ConvertTSVToGBK(tsv_fp, fasta_fp, op_gbk_fp, type2ix=None,
                                         id2seq[x],
                                         x,
                                         date_str,
-                                        accession_list
+                                        [x] 
                                         )
         # func from print_genbank_features
         #features_file_str += get_features_str(gbk_record)
@@ -177,6 +177,7 @@ def createGenBankRecord(locus_name,
     gbk_record.keywords = []
     gbk_record.locus = locus_name
     gbk_record.molecule_type = molecule_type 
+    # is NID deprecated?
     gbk_record.nid = nid
     gbk_record.organism = ""
     gbk_record.origin = ""
@@ -360,7 +361,7 @@ def CreateSeqFeatureFromTSVRow(id2seqfeat, TSV_row, type2ix, id2seq, feat_id, sp
         qualifier_d = parseSpecialString1(TSV_row[type2ix['qualifiers']])
     else:
         if "desc" in type2ix:
-            qualifier_d["desc"] = TSV_row[type2ix["desc"]]
+            qualifier_d["product"] = TSV_row[type2ix["desc"]]
         if "name" in type2ix and TSV_row[type2ix["name"]] != "":
             qualifier_d["name"] = TSV_row[type2ix["name"]]
    
