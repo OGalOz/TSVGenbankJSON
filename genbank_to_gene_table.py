@@ -49,6 +49,9 @@ def genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp):
         gbk_fp: (str) Path to genbank file.
         gnm_fp: (str) Path to genome fna file
         op_fp: (str) Path to write genes table to
+
+    We use GenBank Records and Features
+
     """
 
     
@@ -70,7 +73,6 @@ def genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp):
                    "gene": 21}
 
     for gb_record in gb_record_generator:
-        print(gb_record)
 
         locus_tag = gb_record.name
         #Genome sequence:
@@ -83,7 +85,7 @@ def genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp):
         #Genome features (list of features):
         g_features = gb_record.features
         #DEBUG
-        print(g_features[0])
+        #print(g_features[0])
         g_feat_len = len(g_features)
 
         """
@@ -95,6 +97,15 @@ def genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp):
 
         try:
             for i in range(g_feat_len):
+
+
+                current_feat = g_features[i]
+
+                if current_feat.type == "source":
+                    print("Feature is of type 'source':")
+                    print(current_feat)
+                    continue
+
                 
                 #scaffold already set above
                 begin = "null"
@@ -108,11 +119,7 @@ def genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp):
                 GC = "null"
                 nTA = "null"
 
-                current_feat = g_features[i]
 
-                print(current_feat)
-                print(current_feat.qualifiers)
-                
                 """
                 # Scaffold Id
                 if scaffoldId_exists:
@@ -147,8 +154,9 @@ def genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp):
                     desc = str(current_feat.qualifiers['product'][0])
                 else:
                     desc = "Unknown function" 
-                    logging.critical("Could not find description in current_feat")
-
+                    logging.critical("Could not find description in current_feat: ")
+                    logging.critical(current_feat)
+                    continue
 
                 typ_str = current_feat.type.strip()
                 if typ_str in types_dict:
@@ -498,6 +506,7 @@ def main():
         gnm_fp = args[2]
         op_fp = args[3]
         genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp)
+        print(f"Wrote gene table to {op_fp}")
 
 
 if __name__ == "__main__":
