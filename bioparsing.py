@@ -115,18 +115,27 @@ def parse_tsv(inp_tsv_fp, headers=True):
     }
 
 
-def parseFASTA(fasta_fp):
+def parseFASTA(fasta_fp, BioSeq_bool=False):
     """
     Args:
         fasta_fp: filepath to FASTA file
+        BioSeq_bool: (bool) decides whether to return sequences in BioPython
+                        Sequence format
     Returns:
         id2seq: (dict)
             Goes from sequence ID/ name (str) -> sequence (str)
     """
     id2seq = {}
     seq_generator = SeqIO.parse(fasta_fp, "fasta")
-    for sequence in seq_generator:
-        id2seq[sequence.id] = str(sequence.seq)
+    
+    if not BioSeq_bool:
+        for sequence in seq_generator:
+            id2seq[sequence.id] = str(sequence.seq)
+    else:
+        for sequence in seq_generator:
+            id2seq[sequence.id] = sequence
+
+
 
     return id2seq
 
