@@ -153,7 +153,7 @@ def genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp):
                 if "product" in current_feat.qualifiers.keys():
                     desc = str(current_feat.qualifiers['product'][0])
                 else:
-                    desc = "Unknown function" 
+                    desc = current_feat.type
                     logging.critical("Could not find description in current_feat: ")
                     logging.critical(current_feat)
                     continue
