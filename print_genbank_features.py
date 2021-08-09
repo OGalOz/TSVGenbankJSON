@@ -46,7 +46,7 @@ def get_genbank_loc_string(feature_loc):
     """
     
     if feature_loc.strand not in [1, -1]:
-        raise Exception(f"Cannot recognize feature strand {feature_loc.strand}")
+        raise Exception(f"Does not recognize feature strand {feature_loc.strand}")
 
     loc_str = ""
     if feature_loc.start != feature_loc.end:
@@ -56,8 +56,8 @@ def get_genbank_loc_string(feature_loc):
     if feature_loc.strand == -1:
         loc_str = "complement(" + loc_str + ")"
 
-    if len(loc_str) > 80:
-        raise Exception(f"location string length is too long: {len(loc_str)}")
+    if len(loc_str) > 58:
+        raise Exception(f"location string length is too long (line above 80 chars). Length:{len(loc_str)}")
 
     return loc_str
 
@@ -123,6 +123,27 @@ def get_gbk_str(gbk_rec):
         output += "//"
         return output
 
+
+
+
+def get_feature_string(feat):
+    """
+    feat is a BioPython SeqFeature object
+    """
+
+    crnt_ft_str = ""
+
+    # Adding first line to feature string (func from print_genbank_features) 
+    crnt_ft_str +=  create_first_line(feat.type, feat.location)
+    feat_qualifiers_d = feat.qualifiers
+    for qlf in feat_qualifiers_d.keys():
+        # (func from print_genbank_features)
+        crnt_ft_str += create_qualifier_str(qlf, feat_qualifiers_d[qlf])
+
+    return crnt_ft_str
+
+
+
 def get_all_features_str(gbk_record):
     """
     We print out features in the style of a GenBank file.
@@ -164,23 +185,4 @@ def get_all_features_str(gbk_record):
         genbank_features_str += get_feature_string(feat)
 
     return genbank_features_str
-
-
-def get_feature_string(feat):
-    """
-    feat is a BioPython SeqFeature object
-    """
-
-    crnt_ft_str = ""
-
-    # Adding first line to feature string (func from print_genbank_features) 
-    crnt_ft_str +=  create_first_line(feat.type, feat.location)
-    feat_qualifiers_d = feat.qualifiers
-    for qlf in feat_qualifiers_d.keys():
-        # (func from print_genbank_features)
-        crnt_ft_str += create_qualifier_str(qlf, feat_qualifiers_d[qlf])
-
-    return crnt_ft_str
-
-    
 

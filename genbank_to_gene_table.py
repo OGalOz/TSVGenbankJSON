@@ -16,33 +16,6 @@ The gene table we'll build will look like:
                 strand (str +/-):name (str):desc (str):GC (float [0,1]):nTA (int)
 '''
 
-
-def convert_genbank_to_gene_table(genbank_filepath, gt_filepath, gffPrlScriptPath):
-    """
-    All inputs are str paths
-    """
-
-
-
-    genbank_filepath = os.path.abspath(genbank_filepath)
-    gt_filepath = os.path.abspath(gt_filepath)
-
-    in_handle = open(genbank_filepath, "r")
-    out_handle = open(gt_filepath +".gff", "w")
-    
-    GFF.write(SeqIO.parse(in_handle, "genbank"), out_handle)
-    
-    in_handle.close()
-    out_handle.close()
-
-    gffToGeneTable_command = "perl " + gffPrlScriptPath + " < " + gt_filepath + ".gff > " + gt_filepath
-    subprocess.call(gffToGeneTable_command, shell=True)
-    logging.info("Wrote Gene Table file to " + gt_filepath)
-    return 0
-
-
-
-
 def genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp):
     """
     Args:
@@ -196,6 +169,150 @@ def findSeqInId2Seq(seq_str, id2seq):
                         f" '{seq_str}'\n\nin id2seq")
 
     return seq_id
+
+
+
+
+"""
+This function removes duplicates from the gene table
+Inputs:
+    gene_table_string: (str) A string of the entire gene table file
+Outputs:
+    gene_table_string: (str) A string of the entire gene table file
+Process: 
+    Compares the location of features and if they are the same removes
+        one of the two.
+"""
+def unduplicate_gene_table(gene_table_string):
+
+
+    #first we split the gene_table into lines:
+    split_list = gene_table_string.split("\n")
+    header_line = split_list[0] + "\n" 
+    gt_lines = split_list[1:]
+    logging.info("Total number of lines besides headers: " + str(len(gt_lines)))
+
+    #Then for each line we check if it's a duplicate or not.
+    #We add the indices of duplicate lines and then remove the lines in reverse order.
+    # 'loc' means begin to end in sequence
+    splitLine = gt_lines[0].split("\t")
+    print(splitLine)
+    existing_loc = splitLine[1:3]; existing_typ = splitLine[2]
+    previous_index = 0
+    # We create a set, duplicate_line_indices
+    duplicate_line_indices = set()
+    print(len(gt_lines))
+    for i in range(1, len(gt_lines) - 1):
+        splitLine = gt_lines[i].split("\t")
+        print(i)
+        current_loc = splitLine[1:3]; crnt_typ = splitLine[-1]
+        if (current_loc[0] == existing_loc[0]) or \
+                (current_loc[1] == existing_loc[1]):
+            if crnt_typ == '1':
+                if existing_typ == '1':
+                    logging.warning("Two overlapping location Protein "
+                            "Features: loc: {}{},{}{} types: {},{}".format(
+                                existing_loc[0], existing_loc[1],
+                                current_loc[0], current_loc[1],
+                                existing_typ, crnt_typ))
+                duplicate_line_indices.add(previous_index)
+                previous_index = i
+            else:
+                if existing_typ == '1':
+                    duplicate_line_indices.add(i)
+                else:
+                    duplicate_line_indices.add(previous_index)
+
+        else:
+            existing_loc = current_loc
+            previous_index = i
+    logging.info("Duplicate Lines: " + str(len(duplicate_line_indices)))
+
+    # Sorting indices so they ascend 
+    duplicate_line_indices = sorted(list(duplicate_line_indices))
+    #removing the indeces in reverse order:
+    duplicate_line_indices.reverse()
+    for i in range(len(duplicate_line_indices)):
+        del gt_lines[duplicate_line_indices[i]]
+
+    logging.info("New total line number (after duplicate line removal): " \
+            + str(len(gt_lines)))
+
+
+
+    #Converting list into string again:
+    gene_table_string = header_line + "\n".join( gt_lines)
+
+
+    return gene_table_string
+
+
+"""
+Inputs:
+    gene_table_string: (str) The gene table string
+    types_to_keep: list<str> Each string in list is a type we want.
+Outputs:
+    gene_table_string: (str) The gene table string.
+"""
+def keep_types_gene_table(gene_table_string, types_to_keep):
+
+    split_list = gene_table_string.split("\n")
+    header_line = split_list[0] + "\n" 
+    gt_lines = split_list[1:]
+
+    non_good_type_indices = []
+
+    #For each line, we check if its type is 1. If not, we remove it later.
+    for i in range(len(gt_lines)):
+        current_type = gt_lines[i].split("\t")[-1]
+        if current_type not in types_to_keep:
+            non_good_type_indices.append(i)
+
+    #removing the indeces in reverse order:
+    non_good_type_indices.reverse()
+    for i in range(len(non_good_type_indices)):
+        del gt_lines[non_good_type_indices[i]]
+
+
+    logging.info("New total line number (after type 1): " + str(len(gt_lines)))
+
+    #Converting list into string again:
+    gene_table_string = header_line + "\n".join(gt_lines)
+
+    return gene_table_string
+
+
+
+def test(args):
+    logging.basicConfig(level=logging.DEBUG)
+    gb_fp = args[1]
+    op_fp = args[2]
+    #prlScript = args[3]
+
+    #config_dict = {"keep_types": ["1","5","6"]}
+    OLD_convert_genbank_to_gene_table(gb_fp, 
+                                    op_fp)
+
+def main():
+    """
+    args should be genbank_to_gene_table.py genbank, output, gffPrlScript
+    """
+    args = sys.argv
+    if args[-1] != "1":
+        print("python3 genbank_to_gene_table.py genbank_fp genome_fna output")
+        sys.exit(0)
+    else:
+        args = sys.argv
+        gbk_fp = args[1]
+        gnm_fp = args[2]
+        op_fp = args[3]
+        genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp)
+        print(f"Wrote gene table to {op_fp}")
+
+
+if __name__ == "__main__":
+    main()
+
 
 
 """
@@ -371,143 +488,3 @@ def OLD_convert_genbank_to_gene_table(genbank_filepath, output_filepath, gff_fas
     return output_filepath
 
 
-
-"""
-This function removes duplicates from the gene table
-Inputs:
-    gene_table_string: (str) A string of the entire gene table file
-Outputs:
-    gene_table_string: (str) A string of the entire gene table file
-Process: 
-    Compares the location of features and if they are the same removes
-        one of the two.
-"""
-def unduplicate_gene_table(gene_table_string):
-
-
-    #first we split the gene_table into lines:
-    split_list = gene_table_string.split("\n")
-    header_line = split_list[0] + "\n" 
-    gt_lines = split_list[1:]
-    logging.info("Total number of lines besides headers: " + str(len(gt_lines)))
-
-    #Then for each line we check if it's a duplicate or not.
-    #We add the indices of duplicate lines and then remove the lines in reverse order.
-    # 'loc' means begin to end in sequence
-    splitLine = gt_lines[0].split("\t")
-    print(splitLine)
-    existing_loc = splitLine[1:3]; existing_typ = splitLine[2]
-    previous_index = 0
-    # We create a set, duplicate_line_indices
-    duplicate_line_indices = set()
-    print(len(gt_lines))
-    for i in range(1, len(gt_lines) - 1):
-        splitLine = gt_lines[i].split("\t")
-        print(i)
-        current_loc = splitLine[1:3]; crnt_typ = splitLine[-1]
-        if (current_loc[0] == existing_loc[0]) or \
-                (current_loc[1] == existing_loc[1]):
-            if crnt_typ == '1':
-                if existing_typ == '1':
-                    logging.warning("Two overlapping location Protein "
-                            "Features: loc: {}{},{}{} types: {},{}".format(
-                                existing_loc[0], existing_loc[1],
-                                current_loc[0], current_loc[1],
-                                existing_typ, crnt_typ))
-                duplicate_line_indices.add(previous_index)
-                previous_index = i
-            else:
-                if existing_typ == '1':
-                    duplicate_line_indices.add(i)
-                else:
-                    duplicate_line_indices.add(previous_index)
-
-        else:
-            existing_loc = current_loc
-            previous_index = i
-    logging.info("Duplicate Lines: " + str(len(duplicate_line_indices)))
-
-    # Sorting indices so they ascend 
-    duplicate_line_indices = sorted(list(duplicate_line_indices))
-    #removing the indeces in reverse order:
-    duplicate_line_indices.reverse()
-    for i in range(len(duplicate_line_indices)):
-        del gt_lines[duplicate_line_indices[i]]
-
-    logging.info("New total line number (after duplicate line removal): " \
-            + str(len(gt_lines)))
-
-
-
-    #Converting list into string again:
-    gene_table_string = header_line + "\n".join( gt_lines)
-
-
-    return gene_table_string
-
-
-"""
-Inputs:
-    gene_table_string: (str) The gene table string
-    types_to_keep: list<str> Each string in list is a type we want.
-Outputs:
-    gene_table_string: (str) The gene table string.
-"""
-def keep_types_gene_table(gene_table_string, types_to_keep):
-
-    split_list = gene_table_string.split("\n")
-    header_line = split_list[0] + "\n" 
-    gt_lines = split_list[1:]
-
-    non_good_type_indices = []
-
-    #For each line, we check if its type is 1. If not, we remove it later.
-    for i in range(len(gt_lines)):
-        current_type = gt_lines[i].split("\t")[-1]
-        if current_type not in types_to_keep:
-            non_good_type_indices.append(i)
-
-    #removing the indeces in reverse order:
-    non_good_type_indices.reverse()
-    for i in range(len(non_good_type_indices)):
-        del gt_lines[non_good_type_indices[i]]
-
-
-    logging.info("New total line number (after type 1): " + str(len(gt_lines)))
-
-    #Converting list into string again:
-    gene_table_string = header_line + "\n".join(gt_lines)
-
-    return gene_table_string
-
-
-
-def test(args):
-    logging.basicConfig(level=logging.DEBUG)
-    gb_fp = args[1]
-    op_fp = args[2]
-    #prlScript = args[3]
-
-    #config_dict = {"keep_types": ["1","5","6"]}
-    OLD_convert_genbank_to_gene_table(gb_fp, 
-                                    op_fp)
-
-def main():
-    """
-    args should be genbank_to_gene_table.py genbank, output, gffPrlScript
-    """
-    args = sys.argv
-    if args[-1] != "1":
-        print("python3 genbank_to_gene_table.py genbank_fp genome_fna output")
-        sys.exit(0)
-    else:
-        args = sys.argv
-        gbk_fp = args[1]
-        gnm_fp = args[2]
-        op_fp = args[3]
-        genbank_and_genome_fna_to_gene_table(gbk_fp, gnm_fp, op_fp)
-        print(f"Wrote gene table to {op_fp}")
-
-
-if __name__ == "__main__":
-    main()

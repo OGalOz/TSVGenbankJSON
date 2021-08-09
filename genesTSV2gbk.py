@@ -472,6 +472,7 @@ def main():
                                 json_fp=json_fp
                                )
                 print(f"Wrote GBK to {op_gbk_fp} and JSON file to {json_fp}")
+            sys.exit(0)
 
 
 
