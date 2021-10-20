@@ -69,10 +69,12 @@ FeatureLocation:
 def parse_tsv(inp_tsv_fp, headers=True):
     """
     Returns:
+        {
             "total_line_number": int, Number of lines in file
             "num_columns": int, Total Number of columns
             "header_d": header_d, dict: column -> index
             "matrix": matrix the file in list format (list<list>)
+        }
     """
 
     tsv_fh = open(inp_tsv_fp, "r")

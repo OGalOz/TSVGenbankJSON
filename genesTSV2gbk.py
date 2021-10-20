@@ -63,7 +63,7 @@ def ConvertTSVToGBK(tsv_fp, fasta_fp, op_gbk_fp, type2ix=None,
                     accession_list=[], locus_base="", json_fp=None):
 
     TSV_Info =  parse_tsv(tsv_fp, headers=True)
-    print(list(TSV_Info))
+    print(TSV_Info)
     print(TSV_Info["header_d"])
     check_headers(TSV_Info["header_d"])
     id2seq = parseFASTA(fasta_fp)
@@ -364,6 +364,8 @@ def CreateSeqFeatureFromTSVRow(id2seqfeat, TSV_row, type2ix, id2seq, feat_id, sp
             qualifier_d["product"] = TSV_row[type2ix["desc"]]
         if "name" in type2ix and TSV_row[type2ix["name"]] != "":
             qualifier_d["name"] = TSV_row[type2ix["name"]]
+        if "locusId" in type2ix and TSV_row[type2ix["locusId"]] != "":
+            qualifier_d["locus_tag"] = TSV_row[type2ix["locusId"]]
    
     strand = 1 if TSV_row[type2ix['strand']] == "+" else -1
     type_num_str = TSV_row[type2ix['type']]
